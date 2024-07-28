@@ -44,6 +44,7 @@ var (
 	logger = grpclog.Component("balancer")
 )
 
+// Register 和 unregisterForTesting：用于注册和注销负载均衡器构建器的函数。
 // Register registers the balancer builder to the balancer map. b.Name
 // (lowercased) will be used as the name registered with this builder.  If the
 // Builder implements ConfigParser, ParseConfig will be called when new service
@@ -125,6 +126,7 @@ func Get(name string) Builder {
 // implementation of this interface. For situations like testing, any
 // implementations should embed this interface. This allows gRPC to add new
 // methods to this interface.
+// SubConn：代表一个连接到 gRPC 后端服务的连接。 接口
 type SubConn interface {
 	// UpdateAddresses updates the addresses used in this SubConn.
 	// gRPC checks if currently-connected address is still in the new list.
@@ -187,6 +189,7 @@ type State struct {
 // brand new implementation of this interface. For the situations like
 // testing, the new implementation should embed this interface. This allows
 // gRPC to add new methods to this interface.
+// ClientConn：代表一个 gRPC 客户端连接（ClientConn），用于管理 SubConn。 接口
 type ClientConn interface {
 	// NewSubConn is called by balancer to create a new SubConn.
 	// It doesn't block and wait for the connections to be established.
@@ -259,6 +262,7 @@ type BuildOptions struct {
 }
 
 // Builder creates a balancer.
+// Builder：接口，用于创建新的负载均衡器。接口
 type Builder interface {
 	// Build creates a new balancer with the ClientConn.
 	Build(cc ClientConn, opts BuildOptions) Balancer
@@ -350,6 +354,7 @@ func TransientFailureError(e error) error { return e }
 // internal state has changed.
 //
 // The pickers used by gRPC can be updated by ClientConn.UpdateState().
+// Picker：接口，用于选择用于 RPC 的连接。接口
 type Picker interface {
 	// Pick returns the connection to use for this RPC and related information.
 	//
@@ -381,6 +386,7 @@ type Picker interface {
 // UpdateClientConnState, ResolverError, UpdateSubConnState, and Close are
 // guaranteed to be called synchronously from the same goroutine.  There's no
 // guarantee on picker.Pick, it may be called anytime.
+// Balancer：接口，管理 SubConn，并生成和更新用于选择连接的 Picker。 接口
 type Balancer interface {
 	// UpdateClientConnState is called by gRPC when the state of the ClientConn
 	// changes.  If the error returned is ErrBadResolverState, the ClientConn
@@ -456,4 +462,7 @@ type ProducerBuilder interface {
 // associated with a SubConn, and an implementation will typically contain
 // other methods to provide additional functionality, e.g. configuration or
 // subscription registration.
+// 这个声明将 Producer 定义为 any，它在以前的 Go 版本中相当于 interface{}。
+// 这意味着 Producer 类型可以是任何值，不受具体类型的限制。
+// 这种定义方式在泛型编程中非常有用，因为它允许灵活地处理不同类型的值。
 type Producer any

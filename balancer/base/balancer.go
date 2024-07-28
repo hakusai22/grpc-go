@@ -28,14 +28,19 @@ import (
 	"google.golang.org/grpc/resolver"
 )
 
+// var 声明变量。logger 是一个用于日志记录的变量。
 var logger = grpclog.Component("balancer")
 
+// type 声明类型。baseBuilder 是一个结构体，包含了构建负载均衡器所需的基本信息。
 type baseBuilder struct {
 	name          string
 	pickerBuilder PickerBuilder
 	config        Config
 }
 
+// 这是 baseBuilder 类型的一个方法，用来构建一个新的负载均衡器实例。
+// 创建并初始化一个 baseBalancer 结构体实例。
+// 初始化选择器为一个总是返回 ErrNoSubConnAvailable 的选择器。
 func (bb *baseBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions) balancer.Balancer {
 	bal := &baseBalancer{
 		cc:            cc,
@@ -54,10 +59,12 @@ func (bb *baseBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions) 
 	return bal
 }
 
+// Name 方法
 func (bb *baseBuilder) Name() string {
 	return bb.name
 }
 
+// baseBalancer 结构体包含了负载均衡器所需的所有状态和配置。
 type baseBalancer struct {
 	cc            balancer.ClientConn
 	pickerBuilder PickerBuilder
@@ -74,6 +81,7 @@ type baseBalancer struct {
 	connErr     error // the last connection error; cleared upon leaving TransientFailure
 }
 
+// ResolverError 方法处理解析器错误，并在必要时更新负载均衡器的状态。
 func (b *baseBalancer) ResolverError(err error) {
 	b.resolverErr = err
 	if b.subConns.Len() == 0 {
@@ -92,6 +100,7 @@ func (b *baseBalancer) ResolverError(err error) {
 	})
 }
 
+// 更新负载均衡器状态。
 func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) error {
 	// TODO: handle s.ResolverState.ServiceConfig?
 	if logger.V(2) {
@@ -243,6 +252,9 @@ func (b *baseBalancer) Close() {
 // ExitIdle is a nop because the base balancer attempts to stay connected to
 // all SubConns at all times.
 func (b *baseBalancer) ExitIdle() {
+}
+
+func (b *baseBalancer) ExitIdle22() {
 }
 
 // NewErrPicker returns a Picker that always returns err on Pick().

@@ -35,9 +35,13 @@ import (
 	"google.golang.org/grpc/serviceconfig"
 )
 
+// init 方法用于在包初始化时注册 pickfirstBuilder。
+// 同时设置了一个用于测试的地址列表打乱函数。
 func init() {
 	balancer.Register(pickfirstBuilder{})
-	internal.ShuffleAddressListForTesting = func(n int, swap func(i, j int)) { rand.Shuffle(n, swap) }
+	internal.ShuffleAddressListForTesting = func(n int, swap func(i, j int)) {
+		rand.Shuffle(n, swap)
+	}
 }
 
 var logger = grpclog.Component("pick-first-lb")
@@ -48,6 +52,7 @@ const (
 	logPrefix = "[pick-first-lb %p] "
 )
 
+// 定义了 pickfirstBuilder 类型，它实现了 balancer.Builder 接口。
 type pickfirstBuilder struct{}
 
 func (pickfirstBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions) balancer.Balancer {
@@ -56,10 +61,13 @@ func (pickfirstBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions)
 	return b
 }
 
+// Name 方法返回负载均衡器的名称 pick_first。
 func (pickfirstBuilder) Name() string {
 	return Name
 }
 
+// 定义了 pfConfig 结构体用于解析和存储负载均衡策略的配置。
+// ParseConfig 方法将 JSON 配置解析为 pfConfig 结构体。
 type pfConfig struct {
 	serviceconfig.LoadBalancingConfig `json:"-"`
 
@@ -77,6 +85,7 @@ func (pickfirstBuilder) ParseConfig(js json.RawMessage) (serviceconfig.LoadBalan
 	return cfg, nil
 }
 
+// 定义了 pickfirstBalancer 类型，它包含日志记录器、连接状态、客户端连接和子连接等字段。
 type pickfirstBalancer struct {
 	logger  *internalgrpclog.PrefixLogger
 	state   connectivity.State
@@ -84,6 +93,8 @@ type pickfirstBalancer struct {
 	subConn balancer.SubConn
 }
 
+// ResolverError 方法处理从解析器接收到的错误。
+// 如果子连接不存在或当前状态是瞬时失败，则更新负载均衡器的状态并设置错误选择器。
 func (b *pickfirstBalancer) ResolverError(err error) {
 	if b.logger.V(2) {
 		b.logger.Infof("Received error from the name resolver: %v", err)
